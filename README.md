@@ -12,7 +12,7 @@ Vue 3 · TypeScript · Vite · Pinia · Vue Router · Element Plus · ECharts（
 
 ```bash
 pnpm install          # 安装依赖（npmmirror 源）
-pnpm dev              # 开发服务器 http://localhost:5173（/api、/rest 代理到 :8080）
+pnpm dev              # 开发服务器 http://localhost:5173（/api、/rest 代理到 :18080）
 pnpm build            # 类型检查 + 生产构建（vue-tsc -b && vite build）
 pnpm test             # Vitest 单测
 pnpm lint / format    # ESLint / Prettier

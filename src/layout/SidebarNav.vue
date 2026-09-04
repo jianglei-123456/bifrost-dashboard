@@ -2,6 +2,7 @@
 import { useRoute } from 'vue-router'
 import {
   Collection,
+  Folder,
   FolderOpened,
   Headset,
   InfoFilled,
@@ -44,6 +45,13 @@ const groups: NavGroup[] = [
     ],
   },
   {
+    title: '图书',
+    items: [
+      { label: '图书', to: '/books', icon: Reading },
+      { label: '库根', to: '/books/roots', icon: Folder },
+    ],
+  },
+  {
     title: '媒体库',
     items: [
       { label: '库根', to: '/library-roots', icon: FolderOpened },
@@ -60,7 +68,7 @@ const groups: NavGroup[] = [
   {
     title: '即将联通',
     items: [],
-    comingSoon: ['影音', '图书'],
+    comingSoon: ['影音'],
   },
 ]
 

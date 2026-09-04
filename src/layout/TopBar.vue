@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 
+import ScanStatusDot from '@/components/ScanStatusDot.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useScanStore } from '@/stores/scan'
 
@@ -31,8 +32,8 @@ async function onCommand(command: string) {
   <header class="topbar">
     <h1 class="topbar-title">{{ title }}</h1>
     <div class="topbar-right">
-      <div class="scan-pill" :class="{ scanning: scan.scanning }">
-        <span class="scan-dot" />
+      <div class="scan-pill" :title="scan.scanning ? '音乐扫描中' : '音乐扫描空闲'">
+        <ScanStatusDot :scanning="scan.scanning" />
         <span>{{ scan.scanning ? '扫描中' : '空闲' }}</span>
       </div>
       <el-dropdown trigger="click" @command="onCommand">
@@ -91,18 +92,6 @@ async function onCommand(command: string) {
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 3px 10px;
-}
-
-.scan-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--success);
-}
-
-.scan-pill.scanning .scan-dot {
-  background: var(--warn);
-  animation: breathe 2s ease-in-out infinite;
 }
 
 .user-chip {

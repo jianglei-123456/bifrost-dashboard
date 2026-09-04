@@ -12,6 +12,9 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AlbumCard: typeof import('./components/AlbumCard.vue')['default']
+    BookCover: typeof import('./components/BookCover.vue')['default']
+    BookEditDialog: typeof import('./components/BookEditDialog.vue')['default']
+    BookScanStatusBar: typeof import('./components/BookScanStatusBar.vue')['default']
     CoverArt: typeof import('./components/CoverArt.vue')['default']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElDialog: typeof import('element-plus/es')['ElDialog']
@@ -22,7 +25,10 @@ declare module 'vue' {
     ElFormItem: typeof import('element-plus/es')['ElFormItem']
     ElIcon: typeof import('element-plus/es')['ElIcon']
     ElInput: typeof import('element-plus/es')['ElInput']
+    ElInputNumber: typeof import('element-plus/es')['ElInputNumber']
+    ElOption: typeof import('element-plus/es')['ElOption']
     ElPagination: typeof import('element-plus/es')['ElPagination']
+    ElSelect: typeof import('element-plus/es')['ElSelect']
     ElSwitch: typeof import('element-plus/es')['ElSwitch']
     ElTable: typeof import('element-plus/es')['ElTable']
     ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
@@ -32,6 +38,7 @@ declare module 'vue' {
     RatingStars: typeof import('./components/RatingStars.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    ScanStatusDot: typeof import('./components/ScanStatusDot.vue')['default']
     StarButton: typeof import('./components/StarButton.vue')['default']
     StatCard: typeof import('./components/StatCard.vue')['default']
     TrackTable: typeof import('./components/TrackTable.vue')['default']

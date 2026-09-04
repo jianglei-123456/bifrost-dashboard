@@ -3,20 +3,13 @@ import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 
-import {
-  createLibraryRoot,
-  deleteLibraryRoot,
-  fetchLibraryRoots,
-  updateLibraryRoot,
-} from '@/api/libraryRoots'
-import type { LibraryRoot } from '@/api/types'
 import ScanStatusDot from '@/components/ScanStatusDot.vue'
-import { useScanStore } from '@/stores/scan'
-import { formatDateTime, parseScanStats } from '@/utils/format'
+import { useBookStore } from '@/stores/book'
+import type { BookRoot } from '@/api/types'
+import { formatDateTime } from '@/utils/format'
 
-const scan = useScanStore()
+const book = useBookStore()
 
-const roots = ref<LibraryRoot[]>([])
 const loading = ref(false)
 
 const dialog = reactive({
@@ -36,7 +29,7 @@ const rules: FormRules = {
 async function load() {
   loading.value = true
   try {
-    roots.value = await fetchLibraryRoots()
+    await book.loadRoots()
   } finally {
     loading.value = false
   }
@@ -54,7 +47,7 @@ function openCreate() {
 }
 
 function openEdit(row: unknown) {
-  const root = row as LibraryRoot
+  const root = row as BookRoot
   dialog.visible = true
   dialog.editing = true
   dialog.id = root.id
@@ -69,50 +62,59 @@ async function save() {
   dialog.saving = true
   try {
     if (dialog.editing) {
-      await updateLibraryRoot(dialog.id, { ...form })
+      await book.updateRoot(dialog.id, { ...form })
       ElMessage.success('库根已更新')
     } else {
-      await createLibraryRoot({ ...form })
+      await book.createRoot({ ...form })
       ElMessage.success('库根已添加')
     }
     dialog.visible = false
-    await load()
   } finally {
     dialog.saving = false
   }
 }
 
 async function toggleEnabled(row: unknown, enabled: unknown) {
-  const root = row as LibraryRoot
+  const root = row as BookRoot
   const enable = Boolean(enabled)
-  await updateLibraryRoot(root.id, { enabled: enable })
-  ElMessage.success(enable ? '已启用' : '已停用（曲目将隐藏）')
-  await load()
+  try {
+    await book.updateRoot(root.id, { enabled: enable })
+    ElMessage.success(enable ? '已启用' : '已停用（图书将隐藏）')
+  } catch {
+    // 请求拦截器已弹错；失败时行内开关不刷新 = 保持原状
+  }
 }
 
 async function remove(row: unknown) {
-  const root = row as LibraryRoot
+  const root = row as BookRoot
   await ElMessageBox.confirm(
-    `删除库根「${root.name}」后，其曲目将标记为缺失并隐藏（记录保留）。确定删除？`,
+    `删除库根「${root.name}」后，其图书将标记为不可用并隐藏（记录保留）。确定删除？`,
     '删除库根',
     { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' },
   )
-  await deleteLibraryRoot(root.id)
+  await book.deleteRoot(root.id)
   ElMessage.success('库根已删除')
-  await load()
 }
 
+/** 触发单根异步扫描（立即返回；进度见顶部 BookScanStatusBar） */
 async function scanRoot(row: unknown) {
-  const root = row as LibraryRoot
-  const stats = await scan.startRoot(root.id)
-  ElMessage.success(
-    `扫描完成：新增 ${stats.added} · 更新 ${stats.updated} · 缺失 ${stats.missing} · 错误 ${stats.error}`,
-  )
-  await load()
+  const root = row as BookRoot
+  try {
+    const view = await book.scanRoot(root.id)
+    ElMessage.success(view.message || '扫描已启动')
+  } catch {
+    // 拦截器已弹错（如 1100 扫描进行中）
+  }
 }
 
-function statsOf(row: unknown) {
-  return parseScanStats((row as LibraryRoot).lastScanStats)
+/** 触发全部 BOOK 根扫描 */
+async function scanAll() {
+  try {
+    const view = await book.scanAll()
+    ElMessage.success(view.message || '已启动全部库根扫描')
+  } catch {
+    // noop
+  }
 }
 </script>
 
@@ -120,23 +122,24 @@ function statsOf(row: unknown) {
   <div class="page">
     <div class="page-header">
       <div>
-        <h2 class="page-title">库根管理</h2>
-        <p class="page-sub">挂载进媒体库的顶层目录；停用的库根不参与扫描</p>
+        <h2 class="page-title">图书库根</h2>
+        <p class="page-sub">挂载进图书库的顶层目录；停用的库根不参与扫描，书籍会标记隐藏</p>
       </div>
       <div class="page-actions">
+        <el-button :disabled="book.busy" @click="scanAll">扫描全部</el-button>
         <el-button type="primary" @click="openCreate">添加库根</el-button>
       </div>
     </div>
 
     <div class="card table-card">
-      <el-table v-loading="loading" :data="roots">
-        <el-table-column label="名称" min-width="140">
+      <el-table v-loading="loading" :data="book.roots">
+        <el-table-column label="名称" min-width="160">
           <template #default="{ row }">
             <span class="root-name">{{ row.name }}</span>
           </template>
         </el-table-column>
 
-        <el-table-column label="路径" min-width="260">
+        <el-table-column label="路径" min-width="240">
           <template #default="{ row }">
             <span class="data-mono path">{{ row.path }}</span>
           </template>
@@ -144,7 +147,16 @@ function statsOf(row: unknown) {
 
         <el-table-column label="启用" width="80" align="center">
           <template #default="{ row }">
-            <el-switch :model-value="row.enabled" @change="(val) => toggleEnabled(row, val)" />
+            <el-switch
+              :model-value="row.enabled"
+              @change="(val) => toggleEnabled(row, val)"
+            />
+          </template>
+        </el-table-column>
+
+        <el-table-column label="类型" width="90" align="center">
+          <template #default="{ row }">
+            <span class="type-chip data-mono">{{ row.mediaType }}</span>
           </template>
         </el-table-column>
 
@@ -163,21 +175,9 @@ function statsOf(row: unknown) {
           </template>
         </el-table-column>
 
-        <el-table-column label="上次统计" min-width="200">
-          <template #default="{ row }">
-            <template v-if="statsOf(row)">
-              <span class="chip add">+{{ statsOf(row)!.added }}</span>
-              <span class="chip upd">~{{ statsOf(row)!.updated }}</span>
-              <span class="chip miss">-{{ statsOf(row)!.missing }}</span>
-              <span class="chip err">!{{ statsOf(row)!.error }}</span>
-            </template>
-            <span v-else class="dim">—</span>
-          </template>
-        </el-table-column>
-
         <el-table-column label="操作" width="190" align="right">
           <template #default="{ row }">
-            <el-button link type="primary" :disabled="scan.scanning" @click="scanRoot(row)">
+            <el-button link type="primary" :disabled="book.busy" @click="scanRoot(row)">
               扫描
             </el-button>
             <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
@@ -195,10 +195,10 @@ function statsOf(row: unknown) {
     >
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
         <el-form-item label="名称" prop="name">
-          <el-input v-model="form.name" placeholder="如：我的音乐库" />
+          <el-input v-model="form.name" placeholder="如：我的图书库" />
         </el-form-item>
         <el-form-item label="目录绝对路径" prop="path">
-          <el-input v-model="form.path" placeholder="如：E:/Music" class="data-mono" />
+          <el-input v-model="form.path" placeholder="如：D:/Books" class="data-mono" />
         </el-form-item>
         <el-form-item label="启用">
           <el-switch v-model="form.enabled" />
@@ -238,30 +238,13 @@ function statsOf(row: unknown) {
   color: var(--text-dim);
 }
 
-.chip {
-  display: inline-block;
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  border-radius: 5px;
-  padding: 0 6px;
-  margin-right: 6px;
-  line-height: 18px;
-}
-
-.chip.add {
-  color: var(--success);
-  background: rgba(61, 220, 151, 0.12);
-}
-.chip.upd {
+.type-chip {
+  font-size: 11px;
   color: var(--info);
-  background: rgba(76, 201, 240, 0.12);
-}
-.chip.miss {
-  color: var(--warn);
-  background: rgba(255, 180, 84, 0.12);
-}
-.chip.err {
-  color: var(--danger);
-  background: rgba(255, 93, 115, 0.12);
+  background: rgba(76, 201, 240, 0.1);
+  border: 1px solid rgba(76, 201, 240, 0.3);
+  border-radius: 999px;
+  padding: 0 8px;
+  line-height: 18px;
 }
 </style>

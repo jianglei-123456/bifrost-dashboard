@@ -93,6 +93,24 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '扫描管理' },
       },
       {
+        path: 'books/roots',
+        name: 'book-roots',
+        component: () => import('@/views/BookRootsView.vue'),
+        meta: { title: '图书库根' },
+      },
+      {
+        path: 'books',
+        name: 'books',
+        component: () => import('@/views/BooksView.vue'),
+        meta: { title: '图书' },
+      },
+      {
+        path: 'books/:id(\\d+)',
+        name: 'book-detail',
+        component: () => import('@/views/BookDetailView.vue'),
+        meta: { title: '图书详情' },
+      },
+      {
         path: 'account',
         name: 'account',
         component: () => import('@/views/AccountView.vue'),

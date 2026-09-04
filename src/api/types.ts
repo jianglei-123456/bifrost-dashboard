@@ -35,6 +35,73 @@ export interface LibraryRoot {
   updatedAt: string
 }
 
+// ── 图书（M2-book，契约事实源：bifrost-core/doc/m2-book）──
+
+/** 封面来源；null = 无封面 */
+export type BookCoverSource = 'EMBEDDED' | 'UPLOADED' | null
+
+/** 图书库根（/api/book-roots BookRootDto；mediaType 恒为 BOOK） */
+export interface BookRoot {
+  id: number
+  name: string
+  path: string
+  enabled: boolean
+  mediaType: string
+  lastScanAt: string | null
+  scanStatus: ScanStatus
+}
+
+/** 图书（/api/books BookDto） */
+export interface Book {
+  id: number
+  title: string
+  authors: string | null
+  language: string | null
+  publisher: string | null
+  /** 出版年（仅年份，1–9999） */
+  pubDate: number | null
+  description: string | null
+  subject: string | null
+  identifier: string | null
+  series: string | null
+  seriesIndex: number | null
+  rights: string | null
+  /** EPUB | PDF */
+  format: string
+  extension: string
+  fileSize: number
+  /** ISO-8601 UTC（后端 Long epoch ms 转 Instant） */
+  fileLastModified: string | null
+  coverSource: BookCoverSource
+  /**
+   * 相对路径（渲染须拼 window.location.origin）；无封面时为 null。
+   * 后端 OPDS 端点支持 ?size=N 缩略图。
+   */
+  coverUrl: string | null
+  isAvailable: boolean
+  libraryRootId: number
+  createdAt: string
+  updatedAt: string
+}
+
+/** 扫描触发响应（/api/book-roots/{id}/scan 或 /scan/all） */
+export interface BookScanTriggerView {
+  scanStatus: ScanStatus
+  /** 单根扫描=该根 id；scan/all 时为 null（用 /scan/status 的 currentRootId） */
+  rootId: number | null
+  message: string
+}
+
+/** 全局 BOOK 扫描状态（/api/book-roots/scan/status） */
+export interface BookScanStatusView {
+  scanStatus: ScanStatus
+  currentRootId: number | null
+  startedAt: string | null
+  lastScanAt: string | null
+  /** 上次扫描统计 JSON 字符串（{added,updated,missing,error}）或 null */
+  lastStats: string | null
+}
+
 export interface Artist {
   id: number
   name: string

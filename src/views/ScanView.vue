@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 
 import { useScanStore } from '@/stores/scan'
+import ScanStatusDot from '@/components/ScanStatusDot.vue'
 import { formatDateTime, parseScanStats } from '@/utils/format'
 
 const scan = useScanStore()
@@ -70,8 +71,8 @@ function statsOf(raw: string | null) {
       <section class="card panel">
         <h3 class="panel-title">
           当前状态
-          <span class="status" :class="{ scanning: scan.scanning }">
-            <span class="status-dot" />
+          <span class="status">
+            <ScanStatusDot :scanning="scan.scanning" />
             {{ scan.scanning ? '扫描中' : '空闲' }}
           </span>
         </h3>
@@ -103,8 +104,8 @@ function statsOf(raw: string | null) {
         </el-table-column>
         <el-table-column label="状态" width="110">
           <template #default="{ row }">
-            <span class="status" :class="{ scanning: row.scanStatus === 'SCANNING' }">
-              <span class="status-dot" />
+            <span class="status">
+              <ScanStatusDot :scanning="row.scanStatus === 'SCANNING'" />
               {{ row.scanStatus === 'SCANNING' ? '扫描中' : '空闲' }}
             </span>
           </template>
@@ -170,18 +171,6 @@ function statsOf(raw: string | null) {
   font-size: 12.5px;
   color: var(--text-dim);
   font-weight: 400;
-}
-
-.status-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--success);
-}
-
-.status.scanning .status-dot {
-  background: var(--warn);
-  animation: breathe 2s ease-in-out infinite;
 }
 
 .meta-line {
