@@ -104,7 +104,7 @@ fetchOrphans(query): Promise<PageResult<OrphanProgress>>                  // GET
 bindOrphan(id: number, bookId: number): Promise<ReadingProgress>          // POST .../bind
 rematchOrphan(id: number): Promise<{ matched: boolean; progress: ReadingProgress | null }>
 ignoreOrphan(id: number, ignored = true): Promise<void>                   // POST .../ignore
-fetchSyncDevices(): Promise<SyncDevice[]>                                 // GET  /api/book-sync/devices
+fetchSyncDevices(): Promise<PageResult<SyncDevice>>                         // GET  /api/book-sync/devices（信封 {total, items}，非裸数组）
 fetchBookSyncStats(): Promise<BookSyncStats>                              // GET  /api/book-sync/stats
 ```
 
