@@ -16,12 +16,8 @@ import {
   VideoCamera,
 } from '@element-plus/icons-vue'
 
-interface NavItem {
-  label: string
-  to: string
-  icon: unknown
-  exact?: boolean
-}
+import { isNavItemActive } from '@/utils/nav'
+import type { NavItem } from '@/utils/nav'
 
 interface NavGroup {
   title: string
@@ -68,7 +64,7 @@ const groups: NavGroup[] = [
 ]
 
 function isActive(item: NavItem): boolean {
-  return item.exact ? route.path === item.to : route.path.startsWith(item.to)
+  return isNavItemActive(item, route.path)
 }
 </script>
 
