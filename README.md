@@ -18,18 +18,18 @@ pnpm test             # Vitest 单测
 pnpm lint / format    # ESLint / Prettier
 ```
 
-**联调前置**：先启动后端（bifrost-core，`./mvnw -pl bifrost-bootstrap -am spring-boot:run`，端口 8080）。登录使用后端初始管理员口令（env `BIFROST_AUTH_INITIAL_PASSWORD` 或已有库的既有口令）。
+**联调前置**：先启动后端（bifrost-core，`./mvnw -pl bifrost-bootstrap -am spring-boot:run`，端口 18080）。登录使用后端初始管理员口令（env `BIFROST_AUTH_INITIAL_PASSWORD` 或已有库的既有口令）。
 
 ## 目录结构
 
 ```
 src/
 ├── api/          # 契约层：axios 封装（信封解包/Basic 注入/401 处理）+ 按域模块 + 类型
-├── stores/       # Pinia：auth（登录态，localStorage 持久化 1 天）、scan（扫描状态，顶栏轮询）
+├── stores/       # Pinia：auth（登录态，localStorage 持久化 1 天）、musicScan（音乐扫描状态，顶栏轮询）、book（图书 + 图书扫描）
 ├── utils/        # auth（Basic/盐）、subsonic（令牌/封面 URL）、format（格式化）
-├── layout/       # AppLayout + 侧栏（彩虹桥签名/媒体分区预留）+ 顶栏（扫描呼吸灯）
+├── layout/       # AppLayout + 侧栏（彩虹桥签名/媒体分区）+ 顶栏（扫描呼吸灯）
 ├── components/   # CoverArt / StarButton / RatingStars / TrackTable / AlbumCard / StatCard
-├── views/        # 登录 · 总览 · 库根 · 扫描 · 艺术家/专辑/曲目(含详情) · 搜索 · 歌单(含详情) · 账号 · 系统
+├── views/        # 登录 · 总览 · 音乐库 · 图书库 · 艺术家/专辑/曲目(含详情) · 搜索 · 歌单(含详情) · 图书(含详情) · 账号 · 系统
 ├── styles/       # tokens.css（设计 token，源自 docs/design.md）+ base.css
 └── test/         # Vitest 全局 setup
 ```

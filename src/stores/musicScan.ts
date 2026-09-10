@@ -1,21 +1,21 @@
 /**
- * 扫描状态：顶栏呼吸灯 + 扫描管理页共用。
- * 管理 REST 的扫描端点是同步的（POST /api/scan 返回最终统计），
- * 状态轮询用于捕捉定时扫描 / 外部触发的扫描。
+ * 音乐扫描状态：顶栏呼吸灯 + 总览页 + 系统页 + 音乐库页共用。
+ * 管理 REST 的音乐扫描端点是同步的（POST /api/music-roots/{id}/scan 返回最终统计），
+ * 状态轮询用于捕捉外部触发的扫描（Subsonic startScan）。
  */
 import { defineStore } from 'pinia'
 
-import { fetchScanStatus, scanAll, scanLibraryRoot } from '@/api/libraryRoots'
-import type { LibraryRoot, ScanStats } from '@/api/types'
+import { fetchMusicScanStatus, scanAllMusicRoots, scanMusicRoot } from '@/api/musicRoots'
+import type { MusicRoot, ScanStats } from '@/api/types'
 import { parseScanStats } from '@/utils/format'
 
-export const useScanStore = defineStore('scan', {
+export const useMusicScanStore = defineStore('music-scan', {
   state: () => ({
     scanning: false,
-    roots: [] as LibraryRoot[],
+    roots: [] as MusicRoot[],
   }),
   getters: {
-    /** 全局上次扫描统计（聚合各库根，取最新一次） */
+    /** 全局上次扫描统计（聚合各音乐目录，取最新一次） */
     lastStats(): ScanStats | null {
       let latest: ScanStats | null = null
       let latestAt = 0
@@ -41,19 +41,19 @@ export const useScanStore = defineStore('scan', {
   },
   actions: {
     async refresh() {
-      const view = await fetchScanStatus()
+      const view = await fetchMusicScanStatus()
       this.scanning = view.scanning
       this.roots = view.roots
     },
     /** 全量扫描（同步，完成后刷新状态） */
     async startFull(): Promise<ScanStats> {
-      const stats = await scanAll()
+      const stats = await scanAllMusicRoots()
       await this.refresh()
       return stats
     },
-    /** 单根扫描 */
+    /** 单目录扫描 */
     async startRoot(id: number): Promise<ScanStats> {
-      const stats = await scanLibraryRoot(id)
+      const stats = await scanMusicRoot(id)
       await this.refresh()
       return stats
     },

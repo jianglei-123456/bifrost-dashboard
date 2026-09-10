@@ -81,22 +81,19 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '歌单详情' },
       },
       {
-        path: 'library-roots',
-        name: 'library-roots',
-        component: () => import('@/views/LibraryRootsView.vue'),
-        meta: { title: '库根管理' },
+        path: 'music-library',
+        name: 'music-library',
+        component: () => import('@/views/MusicLibraryView.vue'),
+        meta: { title: '音乐库' },
       },
-      {
-        path: 'scan',
-        name: 'scan',
-        component: () => import('@/views/ScanView.vue'),
-        meta: { title: '扫描管理' },
-      },
+      // 旧路径（库根管理 / 扫描管理合并进「音乐库」）
+      { path: 'library-roots', redirect: { name: 'music-library' } },
+      { path: 'scan', redirect: { name: 'music-library' } },
       {
         path: 'books/roots',
         name: 'book-roots',
         component: () => import('@/views/BookRootsView.vue'),
-        meta: { title: '图书库根' },
+        meta: { title: '图书库' },
       },
       {
         path: 'books',

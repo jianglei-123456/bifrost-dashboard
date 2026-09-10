@@ -2,10 +2,10 @@
 import { onMounted, ref } from 'vue'
 
 import { ping } from '@/api/client'
-import { useScanStore } from '@/stores/scan'
+import { useMusicScanStore } from '@/stores/musicScan'
 import { formatDateTime } from '@/utils/format'
 
-const scan = useScanStore()
+const musicScan = useMusicScanStore()
 
 const checking = ref(false)
 const pong = ref<string | null>(null)
@@ -26,7 +26,7 @@ async function check() {
 
 onMounted(() => {
   check()
-  scan.refresh().catch(() => {})
+  musicScan.refresh().catch(() => {})
 })
 </script>
 
@@ -60,17 +60,17 @@ onMounted(() => {
         </div>
         <div class="meta">
           管理 REST 基址 <span class="data-mono">/api</span> · 端口
-          <span class="data-mono">8080</span>
+          <span class="data-mono">18080</span>
           （开发期经 Vite 代理）
         </div>
       </section>
 
       <section class="card panel">
-        <h3 class="panel-title">媒体库</h3>
+        <h3 class="panel-title">音乐库</h3>
         <div class="meta">
-          库根数 <span class="data-mono">{{ scan.roots.length }}</span>
-          <template v-if="scan.lastScanAt">
-            · 最近扫描 <span class="data-mono">{{ formatDateTime(scan.lastScanAt) }}</span>
+          音乐目录数 <span class="data-mono">{{ musicScan.roots.length }}</span>
+          <template v-if="musicScan.lastScanAt">
+            · 最近扫描 <span class="data-mono">{{ formatDateTime(musicScan.lastScanAt) }}</span>
           </template>
         </div>
       </section>

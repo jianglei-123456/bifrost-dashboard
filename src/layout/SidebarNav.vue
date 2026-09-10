@@ -9,7 +9,6 @@ import {
   Mic,
   Odometer,
   Reading,
-  RefreshRight,
   Search,
   Setting,
   User,
@@ -42,20 +41,14 @@ const groups: NavGroup[] = [
       { label: '曲目', to: '/tracks', icon: Mic },
       { label: '搜索', to: '/search', icon: Search },
       { label: '歌单', to: '/playlists', icon: Collection },
+      { label: '音乐库', to: '/music-library', icon: FolderOpened },
     ],
   },
   {
     title: '图书',
     items: [
       { label: '图书', to: '/books', icon: Reading },
-      { label: '库根', to: '/books/roots', icon: Folder },
-    ],
-  },
-  {
-    title: '媒体库',
-    items: [
-      { label: '库根', to: '/library-roots', icon: FolderOpened },
-      { label: '扫描', to: '/scan', icon: RefreshRight },
+      { label: '图书库', to: '/books/roots', icon: Folder },
     ],
   },
   {

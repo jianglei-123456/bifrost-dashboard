@@ -1,4 +1,4 @@
-/** 图书库根与扫描 API（M2-book，/api/book-roots） */
+/** 图书目录与扫描 API（M2-book，/api/book-roots） */
 import { request } from './client'
 import type { BookRoot, BookScanStatusView, BookScanTriggerView } from './types'
 

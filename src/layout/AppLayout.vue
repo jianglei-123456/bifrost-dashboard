@@ -6,10 +6,10 @@ import SidebarNav from './SidebarNav.vue'
 import TopBar from './TopBar.vue'
 import BookScanStatusBar from '@/components/BookScanStatusBar.vue'
 import { useBookStore } from '@/stores/book'
-import { useScanStore } from '@/stores/scan'
+import { useMusicScanStore } from '@/stores/musicScan'
 import { parseScanStats } from '@/utils/format'
 
-const scan = useScanStore()
+const musicScan = useMusicScanStore()
 const book = useBookStore()
 
 let timer: number | undefined
@@ -49,7 +49,7 @@ watch(
   },
 )
 
-// 扫描完成（SCANNING→IDLE）提示 + 库根/列表已由 store 刷新
+// 扫描完成（SCANNING→IDLE）提示 + 图书目录/列表已由 store 刷新
 watch(
   () => book.completionTick,
   (tick, prev) => {
@@ -64,10 +64,10 @@ watch(
 )
 
 onMounted(() => {
-  // 音乐扫描：加载一次 + 每 10s 静默轮询（捕捉定时/外部扫描）
-  scan.refresh().catch(() => {})
+  // 音乐扫描：加载一次 + 每 10s 静默轮询（捕捉 Subsonic 等外部触发的扫描）
+  musicScan.refresh().catch(() => {})
   timer = window.setInterval(() => {
-    scan.refresh().catch(() => {})
+    musicScan.refresh().catch(() => {})
   }, 10_000)
 
   // 图书扫描：先读一次再进自适应节奏

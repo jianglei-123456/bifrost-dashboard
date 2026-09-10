@@ -1,23 +1,32 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 
 import {
-  createLibraryRoot,
-  deleteLibraryRoot,
-  fetchLibraryRoots,
-  updateLibraryRoot,
-} from '@/api/libraryRoots'
-import type { LibraryRoot } from '@/api/types'
+  createMusicRoot,
+  deleteMusicRoot,
+  fetchMusicRoots,
+  updateMusicRoot,
+} from '@/api/musicRoots'
+import type { MusicRoot } from '@/api/types'
 import ScanStatusDot from '@/components/ScanStatusDot.vue'
-import { useScanStore } from '@/stores/scan'
+import { useMusicScanStore } from '@/stores/musicScan'
 import { formatDateTime, parseScanStats } from '@/utils/format'
 
-const scan = useScanStore()
+/**
+ * 音乐库：音乐目录管理与扫描合一页（原「库根管理」+「扫描管理」合并）。
+ * 列表取 /api/music-roots（仅 MUSIC、含停用）；音乐扫描是同步接口，
+ * 全局/行内扫描按钮以 loading 呈现，完成后重载列表与全局状态。
+ */
+const musicScan = useMusicScanStore()
 
-const roots = ref<LibraryRoot[]>([])
+const roots = ref<MusicRoot[]>([])
 const loading = ref(false)
+const scanningAll = ref(false)
+const scanningId = ref<number | null>(null)
+/** 正在切换启停的目录 id（防止快速双击发出两次相同 PATCH） */
+const togglingId = ref<number | null>(null)
 
 const dialog = reactive({
   visible: false,
@@ -29,20 +38,37 @@ const formRef = ref<FormInstance>()
 const form = reactive({ name: '', path: '', enabled: true })
 
 const rules: FormRules = {
-  name: [{ required: true, message: '请输入库根名称', trigger: 'blur' }],
+  name: [{ required: true, message: '请输入音乐目录名称', trigger: 'blur' }],
   path: [{ required: true, message: '请输入目录绝对路径', trigger: 'blur' }],
 }
 
+/** 任一扫描进行中（含 Subsonic 等外部触发）→ 禁用全部扫描入口 */
+const busy = computed(() => scanningAll.value || scanningId.value !== null || musicScan.scanning)
+
+let loadSeq = 0
+
+/** 载入音乐目录列表；带序号护栏，避免轮询与手动刷新并发时旧响应覆盖新数据 */
 async function load() {
+  const seq = ++loadSeq
   loading.value = true
   try {
-    roots.value = await fetchLibraryRoots()
+    const items = await fetchMusicRoots()
+    if (seq === loadSeq) roots.value = items
   } finally {
-    loading.value = false
+    if (seq === loadSeq) loading.value = false
   }
 }
 
 onMounted(load)
+
+// scanning 来自 /api/music-roots/scan/status：本页发起的扫描与外部触发（Subsonic startScan）
+// 都会让它置真/置假；任一方向变化都重载列表，使行内「扫描中」与顶栏药丸保持一致
+watch(
+  () => musicScan.scanning,
+  () => {
+    void load()
+  },
+)
 
 function openCreate() {
   dialog.visible = true
@@ -54,7 +80,7 @@ function openCreate() {
 }
 
 function openEdit(row: unknown) {
-  const root = row as LibraryRoot
+  const root = row as MusicRoot
   dialog.visible = true
   dialog.editing = true
   dialog.id = root.id
@@ -69,11 +95,11 @@ async function save() {
   dialog.saving = true
   try {
     if (dialog.editing) {
-      await updateLibraryRoot(dialog.id, { ...form })
-      ElMessage.success('库根已更新')
+      await updateMusicRoot(dialog.id, { ...form })
+      ElMessage.success('音乐目录已更新')
     } else {
-      await createLibraryRoot({ ...form })
-      ElMessage.success('库根已添加')
+      await createMusicRoot({ ...form })
+      ElMessage.success('音乐目录已添加')
     }
     dialog.visible = false
     await load()
@@ -83,36 +109,74 @@ async function save() {
 }
 
 async function toggleEnabled(row: unknown, enabled: unknown) {
-  const root = row as LibraryRoot
+  const root = row as MusicRoot
+  if (togglingId.value !== null) return
   const enable = Boolean(enabled)
-  await updateLibraryRoot(root.id, { enabled: enable })
-  ElMessage.success(enable ? '已启用' : '已停用（曲目将隐藏）')
-  await load()
+  togglingId.value = root.id
+  try {
+    await updateMusicRoot(root.id, { enabled: enable })
+    ElMessage.success(enable ? '已启用' : '已停用（曲目将隐藏）')
+  } catch {
+    // 请求拦截器已弹错；失败时行内开关不刷新 = 保持原状
+  } finally {
+    togglingId.value = null
+    await load()
+  }
 }
 
 async function remove(row: unknown) {
-  const root = row as LibraryRoot
-  await ElMessageBox.confirm(
-    `删除库根「${root.name}」后，其曲目将标记为缺失并隐藏（记录保留）。确定删除？`,
-    '删除库根',
-    { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' },
-  )
-  await deleteLibraryRoot(root.id)
-  ElMessage.success('库根已删除')
+  const root = row as MusicRoot
+  try {
+    await ElMessageBox.confirm(
+      `删除音乐目录「${root.name}」后，其曲目将标记为缺失并隐藏（记录保留）。确定删除？`,
+      '删除音乐目录',
+      { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' },
+    )
+  } catch {
+    return // 用户取消
+  }
+  await deleteMusicRoot(root.id)
+  ElMessage.success('音乐目录已删除')
   await load()
 }
 
-async function scanRoot(row: unknown) {
-  const root = row as LibraryRoot
-  const stats = await scan.startRoot(root.id)
-  ElMessage.success(
-    `扫描完成：新增 ${stats.added} · 更新 ${stats.updated} · 缺失 ${stats.missing} · 错误 ${stats.error}`,
-  )
-  await load()
+/** 单目录扫描（同步：请求返回时统计已完成）；走 store action，完成后 store 已同步刷新 */
+async function scanOne(row: unknown) {
+  const root = row as MusicRoot
+  scanningId.value = root.id
+  try {
+    const stats = await musicScan.startRoot(root.id)
+    ElMessage.success(
+      `「${root.name}」扫描完成：新增 ${stats.added} · 更新 ${stats.updated} · 缺失 ${stats.missing} · 错误 ${stats.error}`,
+    )
+  } catch {
+    // 拦截器已弹错（如 1100 扫描进行中）
+  } finally {
+    scanningId.value = null
+    await load()
+    await musicScan.refresh().catch(() => {})
+  }
+}
+
+/** 全部音乐目录扫描（同步，串行；仅 MUSIC，不触碰图书目录） */
+async function scanAll() {
+  scanningAll.value = true
+  try {
+    const stats = await musicScan.startFull()
+    ElMessage.success(
+      `扫描完成：新增 ${stats.added} · 更新 ${stats.updated} · 缺失 ${stats.missing} · 错误 ${stats.error}`,
+    )
+  } catch {
+    // 拦截器已弹错
+  } finally {
+    scanningAll.value = false
+    await load()
+    await musicScan.refresh().catch(() => {})
+  }
 }
 
 function statsOf(row: unknown) {
-  return parseScanStats((row as LibraryRoot).lastScanStats)
+  return parseScanStats((row as MusicRoot).lastScanStats)
 }
 </script>
 
@@ -120,11 +184,15 @@ function statsOf(row: unknown) {
   <div class="page">
     <div class="page-header">
       <div>
-        <h2 class="page-title">库根管理</h2>
-        <p class="page-sub">挂载进媒体库的顶层目录；停用的库根不参与扫描</p>
+        <h2 class="page-title">音乐库</h2>
+        <p class="page-sub">
+          挂载进音乐库的顶层目录（音乐目录）；停用的目录不参与扫描，其曲目对客户端隐藏
+        </p>
       </div>
       <div class="page-actions">
-        <el-button type="primary" @click="openCreate">添加库根</el-button>
+        <span v-if="busy" class="scan-hint">扫描进行中（同步执行，请勿关闭页面）</span>
+        <el-button :loading="scanningAll" :disabled="busy" @click="scanAll">扫描全部</el-button>
+        <el-button type="primary" @click="openCreate">添加音乐目录</el-button>
       </div>
     </div>
 
@@ -136,7 +204,7 @@ function statsOf(row: unknown) {
           </template>
         </el-table-column>
 
-        <el-table-column label="路径" min-width="260">
+        <el-table-column label="路径" min-width="240">
           <template #default="{ row }">
             <span class="data-mono path">{{ row.path }}</span>
           </template>
@@ -144,7 +212,11 @@ function statsOf(row: unknown) {
 
         <el-table-column label="启用" width="80" align="center">
           <template #default="{ row }">
-            <el-switch :model-value="row.enabled" @change="(val) => toggleEnabled(row, val)" />
+            <el-switch
+              :model-value="row.enabled"
+              :loading="togglingId === row.id"
+              @change="(val) => toggleEnabled(row, val)"
+            />
           </template>
         </el-table-column>
 
@@ -177,7 +249,13 @@ function statsOf(row: unknown) {
 
         <el-table-column label="操作" width="190" align="right">
           <template #default="{ row }">
-            <el-button link type="primary" :disabled="scan.scanning" @click="scanRoot(row)">
+            <el-button
+              link
+              type="primary"
+              :loading="scanningId === row.id"
+              :disabled="busy && scanningId !== row.id"
+              @click="scanOne(row)"
+            >
               扫描
             </el-button>
             <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
@@ -189,13 +267,13 @@ function statsOf(row: unknown) {
 
     <el-dialog
       v-model="dialog.visible"
-      :title="dialog.editing ? '编辑库根' : '添加库根'"
+      :title="dialog.editing ? '编辑音乐目录' : '添加音乐目录'"
       width="520px"
       destroy-on-close
     >
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
         <el-form-item label="名称" prop="name">
-          <el-input v-model="form.name" placeholder="如：我的音乐库" />
+          <el-input v-model="form.name" placeholder="如：我的音乐" />
         </el-form-item>
         <el-form-item label="目录绝对路径" prop="path">
           <el-input v-model="form.path" placeholder="如：E:/Music" class="data-mono" />
@@ -215,6 +293,11 @@ function statsOf(row: unknown) {
 <style scoped>
 .table-card {
   padding: 6px 14px 14px;
+}
+
+.scan-hint {
+  font-size: 12px;
+  color: var(--warn);
 }
 
 .root-name {

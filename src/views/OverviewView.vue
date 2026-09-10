@@ -9,14 +9,14 @@ import VChart from 'vue-echarts'
 use([CanvasRenderer, BarChart, GridComponent, TooltipComponent])
 
 import { fetchAlbums, fetchArtists, fetchTracks } from '@/api/browse'
-import { fetchLibraryRoots } from '@/api/libraryRoots'
+import { fetchMusicRoots } from '@/api/musicRoots'
 import type { Album } from '@/api/types'
 import AlbumCard from '@/components/AlbumCard.vue'
 import StatCard from '@/components/StatCard.vue'
-import { useScanStore } from '@/stores/scan'
+import { useMusicScanStore } from '@/stores/musicScan'
 import { formatCount, formatDateTime } from '@/utils/format'
 
-const scan = useScanStore()
+const musicScan = useMusicScanStore()
 const loading = ref(true)
 
 const stats = reactive({ artists: 0, albums: 0, tracks: 0, roots: 0 })
@@ -29,10 +29,10 @@ onMounted(async () => {
       fetchArtists({ size: 1 }),
       fetchAlbums({ size: 1 }),
       fetchTracks({ size: 1 }),
-      fetchLibraryRoots(),
+      fetchMusicRoots(),
       fetchAlbums({ type: 'frequent', size: 8 }),
       fetchAlbums({ type: 'newest', size: 8 }),
-      scan.refresh(),
+      musicScan.refresh(),
     ])
     stats.artists = artists.total
     stats.albums = albums.total
@@ -45,8 +45,8 @@ onMounted(async () => {
   }
 })
 
-const scanBarOption = computed(() => {
-  const s = scan.lastStats
+const musicScanBarOption = computed(() => {
+  const s = musicScan.lastStats
   const data = s
     ? [
         { value: s.added, itemStyle: { color: 'var(--spectrum-3)' } },
@@ -97,12 +97,12 @@ const scanBarOption = computed(() => {
   <div class="page">
     <div class="page-header">
       <div>
-        <h2 class="page-title">媒体库总览</h2>
+        <h2 class="page-title">音乐库总览</h2>
         <p class="page-sub">彩虹桥联通的一切 —— 音乐库的当前面貌</p>
       </div>
       <div class="page-actions">
-        <span v-if="scan.lastScanAt" class="data-mono last-scan">
-          最近扫描 {{ formatDateTime(scan.lastScanAt) }}
+        <span v-if="musicScan.lastScanAt" class="data-mono last-scan">
+          最近扫描 {{ formatDateTime(musicScan.lastScanAt) }}
         </span>
       </div>
     </div>
@@ -112,20 +112,20 @@ const scanBarOption = computed(() => {
         <StatCard label="艺术家" :value="formatCount(stats.artists)" />
         <StatCard label="专辑" :value="formatCount(stats.albums)" />
         <StatCard label="曲目" :value="formatCount(stats.tracks)" />
-        <StatCard label="库根" :value="formatCount(stats.roots)" :mono="true" />
+        <StatCard label="音乐目录" :value="formatCount(stats.roots)" :mono="true" />
       </div>
 
       <div class="grid-2">
         <section class="card panel">
           <h3 class="panel-title">最近扫描统计</h3>
-          <VChart v-if="scan.lastStats" class="chart" :option="scanBarOption" autoresize />
-          <div v-else class="empty-hint">还没有扫描记录 —— 去「扫描管理」发起第一次扫描</div>
+          <VChart v-if="musicScan.lastStats" class="chart" :option="musicScanBarOption" autoresize />
+          <div v-else class="empty-hint">还没有扫描记录 —— 去「音乐库」发起第一次扫描</div>
         </section>
 
         <section class="card panel">
-          <h3 class="panel-title">库根状态</h3>
-          <ul v-if="scan.roots.length" class="root-list">
-            <li v-for="root in scan.roots" :key="root.id" class="root-item">
+          <h3 class="panel-title">音乐目录状态</h3>
+          <ul v-if="musicScan.roots.length" class="root-list">
+            <li v-for="root in musicScan.roots" :key="root.id" class="root-item">
               <span class="root-dot" :class="{ off: !root.enabled }" />
               <div class="root-main">
                 <span class="root-name">{{ root.name }}</span>
@@ -135,7 +135,7 @@ const scanBarOption = computed(() => {
             </li>
           </ul>
           <div v-else class="empty-hint">
-            还没有库根 —— 去「库根管理」添加第一个目录，架起你的桥
+            还没有音乐目录 —— 去「音乐库」添加第一个目录，架起你的桥
           </div>
         </section>
       </div>

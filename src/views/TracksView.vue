@@ -60,7 +60,7 @@ onMounted(() => load())
         @refresh="load()"
       />
       <p v-if="!loading && !tracks.length" class="empty-hint">
-        没有曲目 —— 添加库根并扫描后这里会出现内容
+        没有曲目 —— 在「音乐库」添加音乐目录并扫描后这里会出现内容
       </p>
       <div v-if="total > 50" class="pager">
         <el-pagination

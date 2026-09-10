@@ -1,5 +1,5 @@
 /**
- * 图书域 store（M2-book）：库根 + 图书列表 + 过滤/分页 + 全局扫描状态。
+ * 图书域 store（M2-book）：图书目录 + 图书列表 + 过滤/分页 + 全局扫描状态。
  *
  * 扫描是异步的：触发后由 AppLayout 的自适应轮询收敛到 IDLE——
  * SCANNING 时 1s、空闲 15s 静默兜底（捕捉其他会话触发的扫描）。
@@ -136,7 +136,7 @@ export const useBookStore = defineStore('book', {
     },
     /**
      * 轮询一次全局扫描状态（AppLayout 定时调用）。
-     * 检测 SCANNING→IDLE：刷新库根行并 bump completionTick（视图据此重拉列表）。
+     * 检测 SCANNING→IDLE：刷新图书目录行并 bump completionTick（视图据此重拉列表）。
      */
     async refreshScanStatus() {
       const prev = this.scanStatus.scanStatus
@@ -161,7 +161,7 @@ export const useBookStore = defineStore('book', {
         this.completionTick += 1
         await this.loadRoots().catch(() => {})
       } else if (started) {
-        // 扫描开始：刷新库根行（哪一行 SCANNING）
+        // 扫描开始：刷新图书目录行（哪一行 SCANNING）
         await this.loadRoots().catch(() => {})
       }
     },

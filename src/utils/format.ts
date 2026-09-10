@@ -50,7 +50,7 @@ export function formatCount(n: number): string {
   return new Intl.NumberFormat('zh-CN').format(n || 0)
 }
 
-/** 解析 LibraryRoot.lastScanStats 的 JSON 字符串 */
+/** 解析音乐目录 / 图书目录 lastScanStats 的 JSON 字符串 */
 export function parseScanStats(raw: string | null | undefined): ScanStats | null {
   if (!raw) return null
   try {

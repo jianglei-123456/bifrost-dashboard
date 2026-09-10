@@ -83,7 +83,7 @@ function goDetail(artist: ArtistView) {
 
     <div v-loading="loading" class="card list-card">
       <p v-if="!loading && !artists.length" class="empty-hint">
-        没有艺术家 —— 添加库根并扫描后这里会出现内容
+        没有艺术家 —— 在「音乐库」添加音乐目录并扫描后这里会出现内容
       </p>
       <ul v-else class="artist-list">
         <li

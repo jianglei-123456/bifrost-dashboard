@@ -24,8 +24,8 @@ function goRoots() {
         <span class="root">{{ book.currentScanRoot.name }}</span>
       </template>
       <span v-else class="sep">·</span>
-      <span class="dim">{{ book.currentScanRoot ? '正在入库' : '全部库根排队中' }}</span>
-      <span class="hint">点击查看库根 →</span>
+      <span class="dim">{{ book.currentScanRoot ? '正在入库' : '全部图书目录排队中' }}</span>
+      <span class="hint">点击查看图书库 →</span>
     </div>
   </transition>
 </template>

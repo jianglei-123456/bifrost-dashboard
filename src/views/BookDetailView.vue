@@ -259,7 +259,7 @@ function onSaved(updated: Book) {
               <dd class="data-mono">{{ formatDateTime(book.createdAt) }}</dd>
             </div>
             <div class="kv-row">
-              <dt>所属库根</dt>
+              <dt>所属图书目录</dt>
               <dd>
                 <router-link
                   v-if="rootName()"

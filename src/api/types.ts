@@ -22,17 +22,17 @@ export interface PageResult<T> {
 
 export type ScanStatus = 'IDLE' | 'SCANNING'
 
-export interface LibraryRoot {
+/** 音乐目录（/api/music-roots MusicRootDto；mediaType 恒为 MUSIC） */
+export interface MusicRoot {
   id: number
   name: string
   path: string
   enabled: boolean
+  mediaType: string
   lastScanAt: string | null
   scanStatus: ScanStatus
   /** 上次扫描统计 JSON 字符串（{added,updated,missing,error}）或 null */
   lastScanStats: string | null
-  createdAt: string
-  updatedAt: string
 }
 
 // ── 图书（M2-book，契约事实源：bifrost-core/doc/m2-book）──
@@ -40,7 +40,7 @@ export interface LibraryRoot {
 /** 封面来源；null = 无封面 */
 export type BookCoverSource = 'EMBEDDED' | 'UPLOADED' | null
 
-/** 图书库根（/api/book-roots BookRootDto；mediaType 恒为 BOOK） */
+/** 图书目录（/api/book-roots BookRootDto；mediaType 恒为 BOOK） */
 export interface BookRoot {
   id: number
   name: string
@@ -204,9 +204,10 @@ export interface ScanStats {
   error: number
 }
 
-export interface ScanStatusView {
+/** 全局音乐扫描状态（/api/music-roots/scan/status） */
+export interface MusicScanStatusView {
   scanning: boolean
-  roots: LibraryRoot[]
+  roots: MusicRoot[]
 }
 
 export interface Playlist {

@@ -5,12 +5,12 @@ import { ElMessageBox } from 'element-plus'
 
 import ScanStatusDot from '@/components/ScanStatusDot.vue'
 import { useAuthStore } from '@/stores/auth'
-import { useScanStore } from '@/stores/scan'
+import { useMusicScanStore } from '@/stores/musicScan'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
-const scan = useScanStore()
+const musicScan = useMusicScanStore()
 
 const title = computed(() => (route.meta.title as string | undefined) ?? 'Bifrost')
 const initial = computed(() => (auth.username[0] ?? 'B').toUpperCase())
@@ -32,9 +32,9 @@ async function onCommand(command: string) {
   <header class="topbar">
     <h1 class="topbar-title">{{ title }}</h1>
     <div class="topbar-right">
-      <div class="scan-pill" :title="scan.scanning ? '音乐扫描中' : '音乐扫描空闲'">
-        <ScanStatusDot :scanning="scan.scanning" />
-        <span>{{ scan.scanning ? '扫描中' : '空闲' }}</span>
+      <div class="scan-pill" :title="musicScan.scanning ? '音乐扫描中' : '音乐扫描空闲'">
+        <ScanStatusDot :scanning="musicScan.scanning" />
+        <span>{{ musicScan.scanning ? '扫描中' : '空闲' }}</span>
       </div>
       <el-dropdown trigger="click" @command="onCommand">
         <button class="user-chip" type="button">

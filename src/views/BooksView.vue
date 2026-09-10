@@ -204,7 +204,7 @@ onMounted(() => {
       <el-select
         v-model="draft.libraryRootId"
         clearable
-        placeholder="全部库根"
+        placeholder="全部图书目录"
         class="f-item f-root"
         @change="applyFilter"
       >

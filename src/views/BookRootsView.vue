@@ -22,7 +22,7 @@ const formRef = ref<FormInstance>()
 const form = reactive({ name: '', path: '', enabled: true })
 
 const rules: FormRules = {
-  name: [{ required: true, message: '请输入库根名称', trigger: 'blur' }],
+  name: [{ required: true, message: '请输入图书目录名称', trigger: 'blur' }],
   path: [{ required: true, message: '请输入目录绝对路径', trigger: 'blur' }],
 }
 
@@ -63,10 +63,10 @@ async function save() {
   try {
     if (dialog.editing) {
       await book.updateRoot(dialog.id, { ...form })
-      ElMessage.success('库根已更新')
+      ElMessage.success('图书目录已更新')
     } else {
       await book.createRoot({ ...form })
-      ElMessage.success('库根已添加')
+      ElMessage.success('图书目录已添加')
     }
     dialog.visible = false
   } finally {
@@ -87,16 +87,20 @@ async function toggleEnabled(row: unknown, enabled: unknown) {
 
 async function remove(row: unknown) {
   const root = row as BookRoot
-  await ElMessageBox.confirm(
-    `删除库根「${root.name}」后，其图书将标记为不可用并隐藏（记录保留）。确定删除？`,
-    '删除库根',
-    { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' },
-  )
+  try {
+    await ElMessageBox.confirm(
+      `删除图书目录「${root.name}」后，其图书将标记为不可用并隐藏（记录保留）。确定删除？`,
+      '删除图书目录',
+      { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' },
+    )
+  } catch {
+    return // 用户取消
+  }
   await book.deleteRoot(root.id)
-  ElMessage.success('库根已删除')
+  ElMessage.success('图书目录已删除')
 }
 
-/** 触发单根异步扫描（立即返回；进度见顶部 BookScanStatusBar） */
+/** 触发单目录异步扫描（立即返回；进度见顶部 BookScanStatusBar） */
 async function scanRoot(row: unknown) {
   const root = row as BookRoot
   try {
@@ -107,11 +111,11 @@ async function scanRoot(row: unknown) {
   }
 }
 
-/** 触发全部 BOOK 根扫描 */
+/** 触发全部图书目录扫描 */
 async function scanAll() {
   try {
     const view = await book.scanAll()
-    ElMessage.success(view.message || '已启动全部库根扫描')
+    ElMessage.success(view.message || '已启动全部图书目录扫描')
   } catch {
     // noop
   }
@@ -122,12 +126,12 @@ async function scanAll() {
   <div class="page">
     <div class="page-header">
       <div>
-        <h2 class="page-title">图书库根</h2>
-        <p class="page-sub">挂载进图书库的顶层目录；停用的库根不参与扫描，书籍会标记隐藏</p>
+        <h2 class="page-title">图书库</h2>
+        <p class="page-sub">挂载进图书库的顶层目录（图书目录）；停用的目录不参与扫描，书籍会标记隐藏</p>
       </div>
       <div class="page-actions">
         <el-button :disabled="book.busy" @click="scanAll">扫描全部</el-button>
-        <el-button type="primary" @click="openCreate">添加库根</el-button>
+        <el-button type="primary" @click="openCreate">添加图书目录</el-button>
       </div>
     </div>
 
@@ -189,7 +193,7 @@ async function scanAll() {
 
     <el-dialog
       v-model="dialog.visible"
-      :title="dialog.editing ? '编辑库根' : '添加库根'"
+      :title="dialog.editing ? '编辑图书目录' : '添加图书目录'"
       width="520px"
       destroy-on-close
     >
