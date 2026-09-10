@@ -1,5 +1,13 @@
 # 阅读进度同步（KOSync）管理端设计
 
+> **实现状态（2026-09-10）：已按本文档落地。**
+> 新增 `src/api/bookSync.ts`、`src/stores/bookSync.ts`、`src/views/BookSyncView.vue`、
+> `src/components/{SyncAccountCard,ProgressTable,OrphanTable,DeviceTable}.vue`、`src/utils/clipboard.ts`；
+> 路由 `/books/progress`，菜单位于「图书 → 阅读进度」。
+> 门禁全绿：`pnpm type-check` / `pnpm test`（41 通过，含 8 条 book-sync store 单测）/ `pnpm lint` / `pnpm build`；
+> 接口字段用真实后端 payload 逐个核对过（含"`@JsonInclude(NON_NULL)` 会把 null 字段整个省略"这一点）。
+> 查看方式：后端跑起来后 `pnpm dev` → 打开 `http://localhost:5173/books/progress`（dev 走 Vite 代理 /api → 18080）。
+
 > 后端契约见兄弟仓库 `../bifrost-core/doc/m3-sync/task/06-前端对接.md`（端点清单与字段样例）与 `doc/m3-sync/task/03-管理REST.md`（字段级细节）。
 > 本文档只管**管理端**：路由、类型、API 模块、store、页面与组件、交互文案。
 > 前置里程碑：M2-book 图书管理（已完成）。对应后端里程碑：**M3-sync**（`../bifrost-core/doc/m3-sync/`）。
