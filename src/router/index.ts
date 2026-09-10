@@ -131,7 +131,10 @@ const routes: RouteRecordRaw[] = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  // base 取 vite 的 BASE_URL：开发时是 '/'，1.0.0 起镜像里由 `vite build --base=/admin/` 注入。
+  // 注意不能省略这个参数——vue-router 的 createWebHistory() 无参时只认 <base href> 标签，
+  // 否则退化成 '/'，在 /admin/ 下刷新任何页面都会匹配不到路由（见 bifrost-core ADR-0007）。
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes,
 })
 
