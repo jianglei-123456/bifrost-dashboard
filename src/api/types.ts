@@ -72,6 +72,11 @@ export interface Book {
   fileSize: number
   /** ISO-8601 UTC（后端 Long epoch ms 转 Instant） */
   fileLastModified: string | null
+  /**
+   * 文档指纹（M3-sync）：KOSync 客户端对文件内容算出的 partial MD5；
+   * 未算过为 null。与扫描用的 fingerprint（path+size+mtime）是两套东西。
+   */
+  partialMd5?: string | null
   coverSource: BookCoverSource
   /**
    * 相对路径（渲染须拼 window.location.origin）；无封面时为 null。
@@ -251,3 +256,91 @@ export type AlbumListType =
   | 'byYear'
   | 'byGenre'
   | 'random'
+
+// ── 阅读进度同步（M3-sync，契约事实源：bifrost-core/doc/m3-sync）──
+// 注意：本域的时间字段都是 ISO-8601 字符串（与 /api/books 一致），
+// 秒级 epoch 只出现在 KOSync 协议端点给设备用的 timestamp 里。
+
+/** 同步账号（/api/book-sync/account）；password 为明文回显（设计决策 R2a） */
+export interface SyncAccount {
+  username: string
+  password: string
+  /** 是否放行设备端自助注册（Register 按钮） */
+  registrationEnabled: boolean
+  /** 未匹配的新指纹是否触发一次图书扫描 */
+  autoScanOnUnmatched: boolean
+  /** 已拼好的服务地址（带 http://），可直接抄进 KOReader */
+  serverUrl: string
+  /** true = 地址来自 bifrost.kosync.publicBaseUrl 配置，false = 按当前主机名+端口拼的兜底值 */
+  serverUrlHintConfigured: boolean
+}
+
+/** 进度与图书的匹配来源 */
+export type ProgressMatchSource = 'AUTO' | 'MANUAL'
+
+/** 阅读进度（/api/book-sync/progress）
+ *  注意：后端 DTO 是 @JsonInclude(NON_NULL)——**值为 null 的字段会被整个省略**，
+ *  所以这些字段是"可选且可能为 null"（孤儿行就没有 bookXxx/coverUrl/matchSource）。 */
+export interface ReadingProgress {
+  id: number
+  /** null/缺省 = 未匹配（孤儿） */
+  bookId?: number | null
+  bookTitle?: string | null
+  bookAuthors?: string | null
+  libraryRootId?: number | null
+  coverUrl?: string | null
+  documentFingerprint: string
+  /** 0–1 */
+  percentage: number
+  /** 位置串（PDF=页码 / EPUB=XPointer），原样来自设备 */
+  progress: string
+  device: string
+  deviceId: string
+  reportedAt: string
+  matchSource?: ProgressMatchSource | null
+  ignored: boolean
+}
+
+/** 孤儿进度（/api/book-sync/orphans）；同样按"null 即省略"处理 */
+export interface OrphanProgress {
+  id: number
+  documentFingerprint: string
+  percentage: number
+  progress: string
+  device: string
+  deviceId: string
+  createdAt: string
+  /** null/缺省 = 自动扫描尚未结算（正常是极短窗口；长挂说明自动扫描被跳过或失败） */
+  scanAttemptedAt?: string | null
+  ignored: boolean
+  /** 建议绑定目标（只建议、不自动绑） */
+  suggestedBookId?: number | null
+  suggestedBookTitle?: string | null
+  /** 建议依据：FILENAME = md5(basename)，OPDS_NAME = md5(标题.扩展名) */
+  suggestionReason?: 'FILENAME' | 'OPDS_NAME' | null
+}
+
+/** 同步设备（/api/book-sync/devices）—— 只读，协议层没有"踢设备" */
+export interface SyncDevice {
+  id: number
+  deviceId: string
+  deviceName: string
+  firstSeenAt: string
+  lastSeenAt: string
+  reportCount: number
+}
+
+/** 阅读进度同步概览（/api/book-sync/stats） */
+export interface BookSyncStats {
+  progressCount: number
+  matchedCount: number
+  orphanCount: number
+  deviceCount: number
+  lastReportedAt: string | null
+}
+
+/** 人工"重新匹配"结果；matched=false 是正常结果（这本书确实还不在库里） */
+export interface RematchResult {
+  matched: boolean
+  progress: ReadingProgress | null
+}

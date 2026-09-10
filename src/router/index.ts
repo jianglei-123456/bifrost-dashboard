@@ -96,6 +96,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '图书库' },
       },
       {
+        path: 'books/progress',
+        name: 'book-sync',
+        component: () => import('@/views/BookSyncView.vue'),
+        meta: { title: '阅读进度' },
+      },
+      {
         path: 'books',
         name: 'books',
         component: () => import('@/views/BooksView.vue'),

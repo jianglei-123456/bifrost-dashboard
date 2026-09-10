@@ -8,6 +8,7 @@ import {
   InfoFilled,
   Mic,
   Odometer,
+  Position,
   Reading,
   Search,
   Setting,
@@ -49,6 +50,7 @@ const groups: NavGroup[] = [
     items: [
       { label: '图书', to: '/books', icon: Reading },
       { label: '图书库', to: '/books/roots', icon: Folder },
+      { label: '阅读进度', to: '/books/progress', icon: Position },
     ],
   },
   {
